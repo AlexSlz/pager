@@ -13,22 +13,50 @@ namespace pagers
 {
     public partial class Form1 : Form
     {
-        public class Letter
+        class Pager
         {
-            public string Text { get; set; }
-            public string Time { get; set; }
-
-            public Letter(string t, string time)
+            public string Id;
+            public string notifyBar;
+            public string letterBar;
+            public Pager(string _id, string _notify, string _letter)
             {
-
+                Id = _id;
+                notifyBar = _notify;
+                letterBar = _letter;
+            }
+            public string getData(string[] myIcons)
+            {
+                return $"{this.Id}{Environment.NewLine}{this.notifyBar}{Environment.NewLine}{this.letterBar}{Environment.NewLine}" +
+                            $"{myIcons[3]}{DateTime.Now.Hour}:{DateTime.Now.Minute}:{DateTime.Now.Second} " +
+                            $"{myIcons[4]}{DateTime.Now.Day}/{DateTime.Now.Month}/{DateTime.Now.Year - 2000}";
             }
         }
+        class Letter
+        {
+            public int id;
+            public string text;
+            public string time;
+            public Letter(int _id, string _text, string _time)
+            {
+                id = _id;
+                text = _text;   
+                time = _time;
+            }
+            public string getData()
+            {
+                return $"{this.text}{Environment.NewLine}{Environment.NewLine}{this.time}";
+            }
+
+        }
+        int scrolli = 1;
         string pagerId = "";
-        string notifiBar = "";
-        string letterBar = "📪";
         int msgPage = 0;
-        List<string> msg = new List<string>();
+        List<Letter> msg = new List<Letter>();
+        Pager pager;
         WebSocket ws = new WebSocket("ws://localhost:3000");
+
+        string[] myIcons = { "✉️", "📪", "📬", "🕒", "📅" };
+
         public Form1()
         {
             ws.OnMessage += (s, e) =>
@@ -40,40 +68,96 @@ namespace pagers
                 }
                 else
                 {
-                    notifiBar = "✉️";
-                    letterBar = "📬";
-                    msg.Add(result + $"{Environment.NewLine}{DateTime.Now.Hour}:{DateTime.Now.Minute}" +
-                                     $" {DateTime.Now.Day}/{DateTime.Now.Month}/{DateTime.Now.Year - 2000}");
+                    result = result.Replace("\\n", Environment.NewLine);
+                    pager.notifyBar = myIcons[0];
+                    pager.letterBar = myIcons[2];
+                    msg.Add(new Letter(msg.Count, result, $"{DateTime.Now.Hour}:{DateTime.Now.Minute}" +
+                                                          $" {DateTime.Now.Day}/{DateTime.Now.Month}/{DateTime.Now.Year - 2000}"));
                     msgPage = msg.Count - 1;
                 }
             };
             ws.Connect();
             InitializeComponent();
-            if(!ws.IsAlive)
+            pager = new Pager(pagerId, "", myIcons[1]);
+            if (!ws.IsAlive)
             {
-                notifiBar = "error...";
+                pager.notifyBar = "error...";
             }
+            watchButton.Click += (s,e) =>
+            {
+                if(msg.Count > 0)
+                    timer1.Enabled = !timer1.Enabled;
+                LoadMsg();
+            };
+            deleteButton.Click += (s, e) =>
+            {
+                DeleteMsg();
+                timer1.Start();
+            };
+            leftButton.Click += (s, e) =>
+            {
+                LoadMsg(0);
+            };
+            rightButton.Click += (s, e) =>
+            {
+                LoadMsg(1);
+            };
+            upButton.Click += (s, e) =>
+            {
+                scrollPage(false);
+            };
+            downButton.Click += (s, e) =>
+            {
+                scrollPage(true);
+            };
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        void scrollPage(bool down)
         {
-
+            int old = 0;
+            try
+            {
+                old = scrolli;
+                textBox1.Select(textBox1.GetFirstCharIndexFromLine(down ? ++scrolli : --scrolli), 0);
+            }
+            catch (Exception)
+            {
+                scrolli = old;
+            }
+            textBox1.ScrollToCaret();
         }
 
         public void LoadInterface()
         {
             textBox1.TextAlign = HorizontalAlignment.Center;
-            textBox1.Text = $"{pagerId}{Environment.NewLine}{notifiBar}{Environment.NewLine}" +
-                            $"{DateTime.Now.Hour}:{DateTime.Now.Minute} {letterBar} " +
-                            $"{DateTime.Now.Day}/{DateTime.Now.Month}/{DateTime.Now.Year - 2000}";
+            textBox1.Text = pager.getData(myIcons);
         }
-        public void LoadMsg()
+
+        public void LoadMsg(int add = 2)
         {
-            if (msg.Count > 0)
+            if (!timer1.Enabled)
             {
-                notifiBar = "";
-                textBox1.TextAlign = HorizontalAlignment.Left;
-                textBox1.Text = $"{msgPage + 1}: {msg[msgPage]}";
+                if (add == 1 && msgPage < msg.Count - 1)
+                    msgPage++;
+                else if (add == 0 && msgPage > 0)
+                    msgPage--;
+                string result = (msg.Count > 1) ? (msgPage + 1) + "/" + (msg.Count) + ": " + Environment.NewLine : "";
+                if (msg.Count > 0)
+                {
+                    pager.notifyBar = "";
+                    textBox1.TextAlign = HorizontalAlignment.Left;
+                    textBox1.Text = $"{result}{msg[msgPage].getData()}";
+                }
+            }
+        }
+        public void DeleteMsg()
+        {
+            if (msg.Count > 0 && !timer1.Enabled)
+            {
+                msg.RemoveAt(msgPage);
+                msgPage = msg.Count - 1;
+                if (msg.Count == 0)
+                    pager.letterBar = myIcons[1];
             }
         }
 
@@ -81,39 +165,28 @@ namespace pagers
         {
             LoadInterface();
         }
-
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter && timer1.Enabled)
+            if (e.KeyCode == Keys.Enter && msg.Count >0 && timer1.Enabled)
             {
                 timer1.Stop();
-            }else if(e.KeyCode == Keys.Back && !timer1.Enabled)
+            }
+            else if (e.KeyCode == Keys.Enter && !timer1.Enabled)
             {
                 timer1.Start();
             }
             else if (e.KeyCode == Keys.Left && !timer1.Enabled)
             {
-                if (msgPage > 0)
-                    msgPage--;
+                LoadMsg(1);
             }
             else if (e.KeyCode == Keys.Right && !timer1.Enabled)
             {
-                if (msgPage < msg.Count - 1)
-                    msgPage++;
-            }else if(e.KeyCode == Keys.Delete && !timer1.Enabled)
-            {
-                if (msg.Count > 0)
-                {
-                    msg.RemoveAt(msgPage);
-                    msgPage = msg.Count - 1;
-                    if (msg.Count == 0)
-                        letterBar = "📪";
-                    timer1.Start();
-                }
+                LoadMsg(0);
             }
-            if (!timer1.Enabled)
+            else if (e.KeyCode == Keys.Delete && !timer1.Enabled)
             {
-                LoadMsg();
+                DeleteMsg();
+                timer1.Start();
             }
         }
     }

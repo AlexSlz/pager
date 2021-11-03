@@ -3,15 +3,16 @@ const form = document.querySelector('.form')
 const inputId = document.querySelector('.inputId')
 const inputText = document.querySelector('.inputText')
 
-let btn = document.querySelector('.btn')
+const btn = document.querySelector('.btn')
+const info = document.querySelector('.info')
 
 const socket = new WebSocket('ws://localhost:3000')
 
-let oldText = btn.textContent
+let oldText = info.textContent
 form.addEventListener('submit', (e) => {
   e.preventDefault()
 
-  if (inputId.value && inputText.value && inputId.value.length > 3) {
+  if (inputText.value && inputId.value.length > 3) {
     let data = { data: inputText.value, id: inputId.value }
     socket.send(JSON.stringify(data))
     btnUpd(false)
@@ -20,20 +21,22 @@ form.addEventListener('submit', (e) => {
   }
 })
 
+inputId.addEventListener('change', function () {
+  if (inputId.value.length == 0 || !inputId.value.includes('A', 0))
+    inputId.value = 'A'
+})
+
 function btnUpd(error) {
   if (error) {
-    btn.innerHTML = 'X'
+    info.innerHTML = 'X'
     btn.classList.add('is_false')
   } else if (!error) {
-    btn.innerHTML = 'ok'
+    info.innerHTML = 'ok'
     btn.classList.add('is_ok')
   }
-  setTimeout(
-    () => (
-      btn.classList.remove('is_false', 'is_ok'), (btn.innerHTML = oldText)
-    ),
-    1500
-  )
+  setTimeout(() => {
+    btn.classList.remove('is_false', 'is_ok')
+  }, 1500)
 }
 
 socket.addEventListener('message', (e) => {
@@ -48,4 +51,8 @@ socket.addEventListener('message', (e) => {
   } else {
     console.log(e.data)
   }
+})
+
+socket.addEventListener('connect', (e) => {
+  console.log(socket.id)
 })
