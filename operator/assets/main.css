@@ -1,0 +1,61 @@
+body {
+  text-align: center;
+}
+h1 {
+  font-size: 5vh;
+}
+.group p {
+  font-size: 2vh;
+  margin-bottom: -0.0001vh;
+}
+textarea,
+input[type='text'] {
+  font-size: 3vh;
+  letter-spacing: 0.1vh;
+  text-align: center;
+}
+textarea,
+input[type='text'] {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-shadow: 1px 1px 1px #999;
+}
+textarea {
+  min-width: 10vw;
+  min-height: 10vh;
+  max-width: 50%;
+  max-height: 10vh;
+}
+
+button.btn {
+  text-align: center;
+  width: 17vh;
+  height: 4vh;
+  line-height: 1;
+  font-size: 2vh;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border: 3px solid #202020;
+  background: #fff;
+  color: #202020;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: all 0.35s;
+}
+
+button:hover {
+  background: #202020;
+  color: #fff;
+}
+
+button.is_ok {
+  color: yellowgreen;
+  background: #202020;
+  width: 5vh;
+}
+button.is_false {
+  color: indianred;
+  background: #202020;
+  width: 4vh;
+}
