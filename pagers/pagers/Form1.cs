@@ -53,7 +53,7 @@ namespace pagers
         int msgPage = 0;
         List<Letter> msg = new List<Letter>();
         Pager pager;
-        WebSocket ws = new WebSocket("ws://localhost:3000");
+        WebSocket ws = new WebSocket("ws://pager-ten.vercel.app:3000");
 
         string[] myIcons = { "✉️", "📪", "📬", "🕒", "📅" };
 
