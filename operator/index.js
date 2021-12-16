@@ -7,6 +7,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html')
 })
 
+const port = process.env.PORT || 3000
+
 app.use(express.static(path.join(__dirname, '/assets')))
 
 const WebSocket = require('ws')
@@ -36,6 +38,7 @@ wss.getUniqueID = function () {
   return 'A' + rand()
 }
 
-http.listen(3000, () => {
+http.listen(port, () => {
   console.log('Server Start')
+  console.log(http.address())
 })
